@@ -56,7 +56,7 @@ const imageCache: Record<string, Buffer> = {};
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
@@ -312,6 +312,10 @@ async function startServer() {
         message: error.message || 'An unexpected error occurred during pass generation.'
       });
     }
+  });
+
+  app.get('/api/health', (_req, res) => {
+    res.json({ ok: true });
   });
 
   // Vite middleware for development

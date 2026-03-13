@@ -124,8 +124,20 @@ export default function App() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown server error' }));
-        throw new Error(errorData.message || `Server returned ${response.status}`);
+        const contentType = response.headers.get('content-type') || '';
+
+        if (contentType.includes('application/json')) {
+          const errorData = await response.json().catch(() => ({ message: '' }));
+          throw new Error(errorData.message || `Server returned ${response.status}`);
+        }
+
+        const errorText = await response.text().catch(() => '');
+        const normalizedText = errorText.replace(/\s+/g, ' ').trim();
+        const fallbackMessage = normalizedText
+          ? `Server returned ${response.status}: ${normalizedText.slice(0, 160)}`
+          : `Server returned ${response.status}`;
+
+        throw new Error(fallbackMessage);
       }
 
       const blob = await response.blob();

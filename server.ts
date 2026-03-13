@@ -7,6 +7,7 @@ import fs from 'fs';
 import { createCanvas, loadImage } from 'canvas';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const MAX_PASS_IMAGE_BYTES = Number(process.env.MAX_PASS_IMAGE_BYTES) || 2_000_000;
 
 /**
  * Normalizes PEM strings from environment variables.
@@ -49,6 +50,15 @@ function normalizePEM(pem?: string): string {
   }
 
   return result;
+}
+
+function shouldSkipPassImage(filePath: string): boolean {
+  try {
+    const { size } = fs.statSync(filePath);
+    return size > MAX_PASS_IMAGE_BYTES;
+  } catch {
+    return true;
+  }
 }
 
 // Cache for image buffers to speed up generation
@@ -107,7 +117,7 @@ async function startServer() {
           
           const bgPath = bgPaths.find(p => fs.existsSync(p));
           
-          if (bgPath) {
+          if (bgPath && !shouldSkipPassImage(bgPath)) {
             // Use canvas to ensure it's a valid PNG for Apple Wallet
             const image = await loadImage(bgPath);
             const canvas = createCanvas(image.width, image.height);
@@ -116,6 +126,8 @@ async function startServer() {
             const buffer = canvas.toBuffer('image/png');
             imageCache[cacheKey] = buffer;
             buffers['background.png'] = buffer;
+          } else if (bgPath) {
+            console.warn(`Skipping oversized pass background: ${path.basename(bgPath)}`);
           }
         }
       } catch (e) {
@@ -167,7 +179,7 @@ async function startServer() {
           
           const posterPath = posterPaths.find(p => fs.existsSync(p));
 
-          if (posterPath) {
+          if (posterPath && !shouldSkipPassImage(posterPath)) {
             const image = await loadImage(posterPath);
             const canvas = createCanvas(image.width, image.height);
             const ctx = canvas.getContext('2d');
@@ -175,6 +187,8 @@ async function startServer() {
             const buffer = canvas.toBuffer('image/png');
             imageCache[cacheKey] = buffer;
             buffers['thumbnail.png'] = buffer;
+          } else if (posterPath) {
+            console.warn(`Skipping oversized pass thumbnail: ${path.basename(posterPath)}`);
           }
         }
       } catch (e) {

@@ -1,0 +1,5 @@
+{
+  "name": "Digitial Concert Pass",
+  "description": "张艺兴演唱会电子票根生成器，适配 Apple Wallet 风格。",
+  "requestFramePermissions": []
+}

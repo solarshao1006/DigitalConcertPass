@@ -1,14 +1,10 @@
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import { PKPass } from 'passkit-generator';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { createCanvas, loadImage } from 'canvas';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MAX_PASS_IMAGE_BYTES = Number(process.env.MAX_PASS_IMAGE_BYTES) || 2_000_000;
-
 /**
  * Normalizes PEM strings from environment variables.
  * Handles literal \n characters, surrounding quotes, and potential base64 encoding.
@@ -52,17 +48,32 @@ function normalizePEM(pem?: string): string {
   return result;
 }
 
-function shouldSkipPassImage(filePath: string): boolean {
-  try {
-    const { size } = fs.statSync(filePath);
-    return size > MAX_PASS_IMAGE_BYTES;
-  } catch {
-    return true;
-  }
+function safePassFilename(city?: string): string {
+  const normalizedCity = (city || 'concert')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  return `lay_zhang_${normalizedCity || 'concert'}.pkpass`;
 }
 
 // Cache for image buffers to speed up generation
 const imageCache: Record<string, Buffer> = {};
+
+function getPassAssetBuffer(cacheKey: string, candidates: string[]): Buffer | undefined {
+  if (imageCache[cacheKey]) {
+    return imageCache[cacheKey];
+  }
+
+  const assetPath = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!assetPath) {
+    return undefined;
+  }
+
+  const buffer = fs.readFileSync(assetPath);
+  imageCache[cacheKey] = buffer;
+  return buffer;
+}
 
 async function startServer() {
   const app = express();
@@ -101,40 +112,24 @@ async function startServer() {
       // Fetch thumbnail image (poster)
       const buffers: Record<string, Buffer> = {};
       
-      // Load background image from local filesystem
+      // Load background image from pre-generated pass assets
       try {
         const season = concert.season || 5;
         const cacheKey = `bg-${season}`;
-        
-        if (imageCache[cacheKey]) {
-          buffers['background.png'] = imageCache[cacheKey];
-        } else {
-          const bgPaths = [
-            path.join(__dirname, 'public', 'imgs', `grandline${season}_bg.jpg`),
-            path.join(__dirname, 'imgs', `grandline${season}_bg.jpg`),
-            path.join(__dirname, `grandline${season}_bg.jpg`)
-          ];
-          
-          const bgPath = bgPaths.find(p => fs.existsSync(p));
-          
-          if (bgPath && !shouldSkipPassImage(bgPath)) {
-            // Use canvas to ensure it's a valid PNG for Apple Wallet
-            const image = await loadImage(bgPath);
-            const canvas = createCanvas(image.width, image.height);
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(image, 0, 0);
-            const buffer = canvas.toBuffer('image/png');
-            imageCache[cacheKey] = buffer;
-            buffers['background.png'] = buffer;
-          } else if (bgPath) {
-            console.warn(`Skipping oversized pass background: ${path.basename(bgPath)}`);
-          }
+
+        const backgroundBuffer = getPassAssetBuffer(cacheKey, [
+          path.join(__dirname, 'public', 'imgs', 'pass', `grandline${season}_bg.png`),
+          path.join(__dirname, 'imgs', 'pass', `grandline${season}_bg.png`),
+        ]);
+
+        if (backgroundBuffer) {
+          buffers['background.png'] = backgroundBuffer;
         }
       } catch (e) {
         console.warn('Failed to load background image for pass', e);
       }
 
-      // Load thumbnail image (poster) from local filesystem
+      // Load thumbnail image (poster) from pre-generated pass assets
       try {
         const season = concert.season || 5;
         let posterFileName = '';
@@ -167,29 +162,14 @@ async function startServer() {
         }
 
         const cacheKey = `poster-${season}-${posterFileName}`;
-        
-        if (imageCache[cacheKey]) {
-          buffers['thumbnail.png'] = imageCache[cacheKey];
-        } else {
-          const posterPaths = [
-            path.join(__dirname, 'public', 'imgs', `grandline${season}`, posterFileName),
-            path.join(__dirname, 'imgs', `grandline${season}`, posterFileName),
-            path.join(__dirname, posterFileName)
-          ];
-          
-          const posterPath = posterPaths.find(p => fs.existsSync(p));
+        const posterStem = posterFileName.replace(/\.jpg$/i, '');
+        const posterBuffer = getPassAssetBuffer(cacheKey, [
+          path.join(__dirname, 'public', 'imgs', 'pass', `grandline${season}`, `${posterStem}.png`),
+          path.join(__dirname, 'imgs', 'pass', `grandline${season}`, `${posterStem}.png`),
+        ]);
 
-          if (posterPath && !shouldSkipPassImage(posterPath)) {
-            const image = await loadImage(posterPath);
-            const canvas = createCanvas(image.width, image.height);
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(image, 0, 0);
-            const buffer = canvas.toBuffer('image/png');
-            imageCache[cacheKey] = buffer;
-            buffers['thumbnail.png'] = buffer;
-          } else if (posterPath) {
-            console.warn(`Skipping oversized pass thumbnail: ${path.basename(posterPath)}`);
-          }
+        if (posterBuffer) {
+          buffers['thumbnail.png'] = posterBuffer;
         }
       } catch (e) {
         console.warn('Failed to load poster image for pass', e);
@@ -316,7 +296,7 @@ async function startServer() {
       const buffer = pass.getAsBuffer();
 
       res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
-      res.setHeader('Content-Disposition', `attachment; filename="lay_zhang_${concert.city}.pkpass"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${safePassFilename(concert.city)}"`);
       res.send(buffer);
 
     } catch (error: any) {
@@ -334,6 +314,7 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

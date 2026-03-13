@@ -69,7 +69,7 @@ async function startServer() {
       const wwdr = normalizePEM(process.env.APPLE_WWDR_CERT);
       const signerCert = normalizePEM(process.env.APPLE_SIGNER_CERT);
       const signerKey = normalizePEM(process.env.APPLE_SIGNER_KEY);
-      const passphrase = process.env.APPLE_SIGNER_KEY_PASSPHRASE;
+      const passphrase = process.env.APPLE_SIGNER_KEY_PASSPHRASE?.trim() || undefined;
 
       const hasCerts = wwdr.includes('-----BEGIN') && 
                        signerCert.includes('-----BEGIN') && 
@@ -199,14 +199,16 @@ async function startServer() {
       }
 
       // Create a new pass
+      const certificates = {
+        wwdr: Buffer.from(wwdr, 'utf-8'),
+        signerCert: Buffer.from(signerCert, 'utf-8'),
+        signerKey: Buffer.from(signerKey, 'utf-8'),
+        ...(passphrase ? { signerKeyPassphrase: passphrase } : {}),
+      };
+
       const pass = new PKPass(
         buffers,
-        {
-          wwdr: Buffer.from(wwdr, 'utf-8'),
-          signerCert: Buffer.from(signerCert, 'utf-8'),
-          signerKey: Buffer.from(signerKey, 'utf-8'),
-          signerKeyPassphrase: passphrase,
-        },
+        certificates,
         {
           formatVersion: 1,
           passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || 'pass.com.example.concert',

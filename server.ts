@@ -192,6 +192,28 @@ async function startServer() {
         console.warn('Failed to load logo image for pass', e);
       }
 
+      // Apple Wallet validators expect icon assets to be present.
+      try {
+        const icon1x = getPassAssetBuffer('icon-1x', [
+          path.join(__dirname, 'public', 'imgs', 'pass', 'icon.png'),
+          path.join(__dirname, 'imgs', 'pass', 'icon.png'),
+        ]);
+        const icon2x = getPassAssetBuffer('icon-2x', [
+          path.join(__dirname, 'public', 'imgs', 'pass', 'icon@2x.png'),
+          path.join(__dirname, 'imgs', 'pass', 'icon@2x.png'),
+        ]);
+        const icon3x = getPassAssetBuffer('icon-3x', [
+          path.join(__dirname, 'public', 'imgs', 'pass', 'icon@3x.png'),
+          path.join(__dirname, 'imgs', 'pass', 'icon@3x.png'),
+        ]);
+
+        if (icon1x) buffers['icon.png'] = icon1x;
+        if (icon2x) buffers['icon@2x.png'] = icon2x;
+        if (icon3x) buffers['icon@3x.png'] = icon3x;
+      } catch (e) {
+        console.warn('Failed to load icon images for pass', e);
+      }
+
       // Create a new pass
       const certificates = {
         wwdr: Buffer.from(wwdr, 'utf-8'),

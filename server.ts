@@ -251,7 +251,7 @@ async function startServer() {
       pass.secondaryFields.push({
         key: 'location',
         label: '\u573a\u9986',
-        value: location || concert.venue
+        value: concert.venue
       });
 
       pass.secondaryFields.push({

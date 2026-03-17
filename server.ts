@@ -233,8 +233,8 @@ async function startServer() {
           serialNumber: concert.id + '-' + Date.now(),
           description: `张艺兴 大航海 · ${concert.tourName} 巡回演唱会 - ${concert.city}`,
           backgroundColor: 'rgb(236, 228, 248)',
-          foregroundColor: 'rgb(52, 33, 85)',
-          labelColor: 'rgb(122, 63, 196)',
+          foregroundColor: 'rgb(33, 24, 54)',
+          labelColor: 'rgb(67, 56, 202)',
           logoText: `Grandline ${concert.season} · ${concert.tourName}`,
         }
       );
@@ -244,32 +244,32 @@ async function startServer() {
       // Event Ticket specific fields
       pass.primaryFields.push({
         key: 'event',
-        label: 'å·¡æ¼',
-        value: concert.tourName || 'é¹å¤©å®«'
+        label: '\u5de1\u6f14',
+        value: concert.tourName || '\u95f9\u5929\u5bab'
       });
 
       pass.secondaryFields.push({
         key: 'location',
-        label: 'åºé¦',
+        label: '\u573a\u9986',
         value: location || concert.venue
       });
 
       pass.secondaryFields.push({
         key: 'seat',
-        label: 'åº§ä½',
-        value: seat || 'éæº'
+        label: '\u5ea7\u4f4d',
+        value: seat || '\u968f\u673a'
       });
 
       pass.auxiliaryFields.push({
         key: 'datetime',
-        label: 'æ¶é´',
+        label: '\u65f6\u95f4',
         value: `${concert.date.replace(/-/g, '/')} ${concert.time}`
       });
 
       if (userName) {
         pass.auxiliaryFields.push({
           key: 'holder',
-          label: 'æç¥¨',
+          label: '\u6301\u7968',
           value: userName
         });
       }
@@ -277,32 +277,32 @@ async function startServer() {
       // Header fields (visible when folded)
       pass.headerFields.push({
         key: 'header-date',
-        label: 'æ¶é´',
+        label: '\u65f6\u95f4',
         value: `${concert.date.replace(/-/g, '/')} ${concert.time}`
       });
 
       pass.headerFields.push({
         key: 'header-location',
-        label: 'åå¸',
+        label: '\u57ce\u5e02',
         value: concert.city
       });
 
       pass.backFields.push({
         key: 'price',
-        label: 'ç¥¨æ¡£',
-        value: `æ¥¼${price}`
+        label: '\u7968\u6863',
+        value: `\u697c${price}`
       });
 
       pass.backFields.push({
         key: 'area',
-        label: 'åºå',
-        value: area || 'ååº'
+        label: '\u533a\u57df',
+        value: area || '\u5185\u573a'
       });
 
       pass.backFields.push({
         key: 'notice',
-        label: 'é¡»ç¥',
-        value: 'è¯·å­æ­¤çµå­ç¥¨æ ¹åææèº«ä»½è¯ä»¶å¥åºãæ¬ç¥¨æ ¹ä»ä¾çºªå¿µï¼éå®æ¹å¯ä¸å¥åºå­è¯ã'
+        label: '\u987b\u77e5',
+        value: '\u8bf7\u51ed\u6b64\u7535\u5b50\u7968\u6839\u53ca\u6709\u6548\u8eab\u4efd\u8bc1\u4ef6\u5165\u573a\u3002\u672c\u7968\u6839\u4ec5\u4f9b\u7eaa\u5ff5\uff0c\u975e\u5b98\u65b9\u552f\u4e00\u5165\u573a\u51ed\u8bc1\u3002'
       });
 
       // Barcode removed as requested

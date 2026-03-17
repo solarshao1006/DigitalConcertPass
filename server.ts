@@ -231,11 +231,11 @@ async function startServer() {
           teamIdentifier: process.env.APPLE_TEAM_ID || 'TEAMID123',
           organizationName: 'Chromosome Entertainment',
           serialNumber: concert.id + '-' + Date.now(),
-          description: `张艺兴 大航海 · ${concert.tourName} 巡回演唱会 - ${concert.city}`,
+          description: `\u5f20\u827a\u5174\u5927\u822a\u6d77${concert.season} \u00b7 ${concert.tourName} - ${concert.city}`,
           backgroundColor: 'rgb(236, 228, 248)',
-          foregroundColor: 'rgb(33, 24, 54)',
-          labelColor: 'rgb(67, 56, 202)',
-          logoText: `Grandline ${concert.season} · ${concert.tourName}`,
+          foregroundColor: 'rgb(255, 255, 255)',
+          labelColor: 'rgb(255, 255, 255)',
+          logoText: `\u5f20\u827a\u5174\u5927\u822a\u6d77${concert.season} \u00b7 ${concert.tourName}`,
         }
       );
 
@@ -245,7 +245,7 @@ async function startServer() {
       pass.primaryFields.push({
         key: 'event',
         label: '\u5de1\u6f14',
-        value: concert.tourName || '\u95f9\u5929\u5bab'
+        value: `\u5f20\u827a\u5174\u5927\u822a\u6d77${concert.season} \u00b7 ${concert.tourName || '\u95f9\u5929\u5bab'}`
       });
 
       pass.secondaryFields.push({

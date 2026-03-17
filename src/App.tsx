@@ -304,7 +304,10 @@ export default function App() {
 
               <footer className="mt-auto pt-12 text-center">
                 <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-[0.3em]">
-                  © 2025 Chromosome Entertainment Group
+                  All copyrights reserved
+                </p>
+                <p className="mt-2 text-[11px] text-zinc-500">
+                  Solar | <a href="https://github.com/solarshao1006" target="_blank" rel="noreferrer" className="underline underline-offset-4">github.com/solarshao1006</a>
                 </p>
               </footer>
             </motion.div>
@@ -534,7 +537,7 @@ function TicketView({ concert, userName, price, area, seat, location }: { concer
           <p className="text-[8px] font-mono text-purple-200/60 tracking-[0.4em] uppercase">
             {userName ? userName.replace(/\s/g, '_') : 'GUEST'}_LZ2025_{concert.id}
           </p>
-          <p className="text-[6px] text-purple-200/40 mt-2 tracking-widest uppercase italic">Chromosome Entertainment Group Official Ticket</p>
+          <p className="text-[6px] text-purple-200/40 mt-2 tracking-widest uppercase italic">All copyrights reserved | Solar</p>
         </div>
       </div>
     </motion.div>

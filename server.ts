@@ -267,6 +267,12 @@ async function startServer() {
         value: seat || '\u968f\u673a'
       });
 
+      pass.secondaryFields.push({
+        key: 'price',
+        label: '\u7968\u6863',
+        value: `\u697c${price}`
+      });
+
       pass.auxiliaryFields.push({
         key: 'datetime',
         label: '\u65f6\u95f4',
@@ -292,12 +298,6 @@ async function startServer() {
         key: 'header-location',
         label: '\u57ce\u5e02',
         value: concert.city
-      });
-
-      pass.backFields.push({
-        key: 'price',
-        label: '\u7968\u6863',
-        value: `\u697c${price}`
       });
 
       pass.backFields.push({

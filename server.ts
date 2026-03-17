@@ -222,6 +222,13 @@ async function startServer() {
         ...(passphrase ? { signerKeyPassphrase: passphrase } : {}),
       };
 
+      const passHeaderTitle =
+        concert.season === 4
+          ? 'Grandline4 \u00b7 Step'
+          : concert.season === 5
+            ? 'Grandline5 \u00b7 \u95f9\u5929\u5bab'
+            : `Grandline${concert.season} \u00b7 ${concert.tourName}`;
+
       const pass = new PKPass(
         buffers,
         certificates,
@@ -235,7 +242,7 @@ async function startServer() {
           backgroundColor: 'rgb(236, 228, 248)',
           foregroundColor: 'rgb(255, 255, 255)',
           labelColor: 'rgb(255, 255, 255)',
-          logoText: `\u5f20\u827a\u5174\u5927\u822a\u6d77${concert.season} \u00b7 ${concert.tourName}`,
+          logoText: passHeaderTitle,
         }
       );
 

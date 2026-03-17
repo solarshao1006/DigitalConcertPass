@@ -232,9 +232,9 @@ async function startServer() {
           organizationName: 'Chromosome Entertainment',
           serialNumber: concert.id + '-' + Date.now(),
           description: `张艺兴 大航海 · ${concert.tourName} 巡回演唱会 - ${concert.city}`,
-          backgroundColor: 'rgb(124, 58, 237)',
-          foregroundColor: 'rgb(255, 255, 255)',
-          labelColor: 'rgb(237, 233, 254)',
+          backgroundColor: 'rgb(236, 228, 248)',
+          foregroundColor: 'rgb(52, 33, 85)',
+          labelColor: 'rgb(122, 63, 196)',
           logoText: `Grandline ${concert.season} · ${concert.tourName}`,
         }
       );
@@ -244,44 +244,32 @@ async function startServer() {
       // Event Ticket specific fields
       pass.primaryFields.push({
         key: 'event',
-        label: '巡演主题',
-        value: concert.tourName || '闹天宫'
+        label: 'å·¡æ¼',
+        value: concert.tourName || 'é¹å¤©å®«'
       });
 
       pass.secondaryFields.push({
         key: 'location',
-        label: '演出场馆',
+        label: 'åºé¦',
         value: location || concert.venue
-      });
-
-      pass.auxiliaryFields.push({
-        key: 'date',
-        label: '演出日期',
-        value: concert.date
-      });
-
-      pass.auxiliaryFields.push({
-        key: 'time',
-        label: '开演时间',
-        value: concert.time
-      });
-
-      pass.secondaryFields.push({
-        key: 'area',
-        label: '观演区域',
-        value: area || '内场'
       });
 
       pass.secondaryFields.push({
         key: 'seat',
-        label: '座位号',
-        value: seat || '随机'
+        label: 'åº§ä½',
+        value: seat || 'éæº'
+      });
+
+      pass.auxiliaryFields.push({
+        key: 'datetime',
+        label: 'æ¶é´',
+        value: `${concert.date.replace(/-/g, '/')} ${concert.time}`
       });
 
       if (userName) {
-        pass.secondaryFields.push({
+        pass.auxiliaryFields.push({
           key: 'holder',
-          label: '持票人',
+          label: 'æç¥¨',
           value: userName
         });
       }
@@ -289,26 +277,32 @@ async function startServer() {
       // Header fields (visible when folded)
       pass.headerFields.push({
         key: 'header-date',
-        label: '演出日期',
+        label: 'æ¶é´',
         value: `${concert.date.replace(/-/g, '/')} ${concert.time}`
       });
 
       pass.headerFields.push({
         key: 'header-location',
-        label: '城市',
+        label: 'åå¸',
         value: concert.city
       });
 
       pass.backFields.push({
         key: 'price',
-        label: '票价档位',
-        value: `¥${price}`
+        label: 'ç¥¨æ¡£',
+        value: `æ¥¼${price}`
+      });
+
+      pass.backFields.push({
+        key: 'area',
+        label: 'åºå',
+        value: area || 'ååº'
       });
 
       pass.backFields.push({
         key: 'notice',
-        label: '入场须知',
-        value: '请凭此电子票根及有效身份证件入场。本票根仅供纪念，非官方唯一入场凭证。'
+        label: 'é¡»ç¥',
+        value: 'è¯·å­æ­¤çµå­ç¥¨æ ¹åææèº«ä»½è¯ä»¶å¥åºãæ¬ç¥¨æ ¹ä»ä¾çºªå¿µï¼éå®æ¹å¯ä¸å¥åºå­è¯ã'
       });
 
       // Barcode removed as requested

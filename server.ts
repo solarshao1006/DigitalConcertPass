@@ -296,15 +296,15 @@ async function startServer() {
       });
 
       pass.secondaryFields.push({
-        key: 'price',
-        label: '\u7968\u6863',
-        value: `${priceCurrency}${price}`
-      });
-
-      pass.auxiliaryFields.push({
         key: 'datetime',
         label: '\u65f6\u95f4',
         value: `${concert.date.replace(/-/g, '/')} ${concert.time}`
+      });
+
+      pass.auxiliaryFields.push({
+        key: 'price',
+        label: '\u7968\u6863',
+        value: `${priceCurrency}${price}`
       });
 
       if (userName) {

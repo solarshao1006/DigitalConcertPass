@@ -13,11 +13,8 @@ import {
   Ticket as TicketIcon, 
   ChevronLeft,
   Download,
-  Share2,
-  Info,
-  Camera
+  Info
 } from 'lucide-react';
-import { toPng } from 'html-to-image';
 import { CONCERTS, Concert, PRICE_TIERS, getPriceTiersForConcert, getCurrencyForConcert } from './constants';
 
 const LAY_ZHANG_IMAGE = "https://picsum.photos/seed/layzhang/800/1200"; // Placeholder for Lay Zhang's image
@@ -72,10 +69,8 @@ export default function App() {
   const [seat, setSeat] = useState('');
   const [location, setLocation] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isSavingImage, setIsSavingImage] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const ticketRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (selectedConcert) {
@@ -86,36 +81,6 @@ export default function App() {
       setPrice(newPriceTiers[newPriceTiers.length - 1]);
     }
   }, [selectedConcert]);
-
-  const handleSaveImage = async () => {
-    if (!ticketRef.current || isSavingImage) return;
-    setIsSavingImage(true);
-    
-    try {
-      // Small delay to ensure any pending renders are complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const dataUrl = await toPng(ticketRef.current, {
-        cacheBust: true,
-        pixelRatio: 2, // Higher quality
-        backgroundColor: '#09090b', // zinc-950
-      });
-      
-      const link = document.createElement('a');
-      link.download = `lay_zhang_ticket_${selectedConcert?.city}_${Date.now()}.png`;
-      link.href = dataUrl;
-      link.click();
-      
-      setToastMessage('票根图片已保存至相册');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-    } catch (err) {
-      console.error('Failed to save image:', err);
-      alert('保存图片失败，请重试');
-    } finally {
-      setIsSavingImage(false);
-    }
-  };
 
   const handleDownloadPass = async () => {
     if (!selectedConcert || isDownloading) return;
@@ -347,7 +312,7 @@ export default function App() {
 
               {/* Ticket View */}
               <div className="flex-1 flex items-center justify-center px-6 py-4">
-                <div ref={ticketRef} className="w-full flex justify-center">
+                <div className="w-full flex justify-center">
                   <TicketView 
                     concert={selectedConcert!} 
                     userName={userName} 
@@ -383,22 +348,6 @@ export default function App() {
                   )}
                 </motion.button>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <button className="glass-card py-4 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
-                    <Share2 size={16} /> 分享
-                  </button>
-                  <button 
-                    onClick={handleSaveImage}
-                    disabled={isSavingImage}
-                    className="glass-card py-4 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50"
-                  >
-                    {isSavingImage ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <><Camera size={16} /> 保存图片</>
-                    )}
-                  </button>
-                </div>
               </div>
             </motion.div>
           )}

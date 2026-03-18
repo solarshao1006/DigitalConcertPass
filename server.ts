@@ -270,7 +270,7 @@ async function startServer() {
       pass.secondaryFields.push({
         key: 'price',
         label: '\u7968\u6863',
-        value: `\u697c${price}`
+        value: `¥${price}`
       });
 
       pass.auxiliaryFields.push({

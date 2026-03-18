@@ -266,16 +266,19 @@ async function startServer() {
       pass.type = 'eventTicket';
 
       // Event Ticket specific fields
+      const concertYear = concert.date?.slice(0, 4) || '2025';
+      const eventTitle = `${concertYear} 张艺兴 [大航海${concert.season}·${concert.tourName || '\u95f9\u5929\u5bab'}]巡回演唱会 ${concert.city}站`;
+
       pass.primaryFields.push({
         key: 'event',
         label: '\u5de1\u6f14',
-        value: `\u5f20\u827a\u5174\u5927\u822a\u6d77${concert.season} \u00b7 ${concert.tourName || '\u95f9\u5929\u5bab'}`
+        value: eventTitle
       });
 
       pass.secondaryFields.push({
-        key: 'location',
-        label: '\u573a\u9986',
-        value: concert.venue
+        key: 'area',
+        label: '\u533a\u57df',
+        value: area || '\u5185\u573a'
       });
 
       pass.secondaryFields.push({
@@ -285,6 +288,12 @@ async function startServer() {
       });
 
       const priceCurrency = getCurrencyForConcert(concert);
+
+      pass.secondaryFields.push({
+        key: 'location',
+        label: '\u573a\u9986',
+        value: concert.venue
+      });
 
       pass.secondaryFields.push({
         key: 'price',
@@ -317,12 +326,6 @@ async function startServer() {
         key: 'header-location',
         label: '\u57ce\u5e02',
         value: concert.city
-      });
-
-      pass.backFields.push({
-        key: 'area',
-        label: '\u533a\u57df',
-        value: area || '\u5185\u573a'
       });
 
       pass.backFields.push({

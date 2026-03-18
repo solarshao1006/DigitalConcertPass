@@ -18,7 +18,7 @@ import {
   Camera
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
-import { CONCERTS, Concert, PRICE_TIERS } from './constants';
+import { CONCERTS, Concert, PRICE_TIERS, getPriceTiersForConcert, getCurrencyForConcert } from './constants';
 
 const LAY_ZHANG_IMAGE = "https://picsum.photos/seed/layzhang/800/1200"; // Placeholder for Lay Zhang's image
 const LOGO_URL = "/imgs/logo.png"; // Local logo path
@@ -67,6 +67,7 @@ export default function App() {
   const [showTicket, setShowTicket] = useState(false);
   const [userName, setUserName] = useState('');
   const [price, setPrice] = useState(PRICE_TIERS[PRICE_TIERS.length - 1]);
+  const [availablePriceTiers, setAvailablePriceTiers] = useState<string[]>(PRICE_TIERS);
   const [area, setArea] = useState('');
   const [seat, setSeat] = useState('');
   const [location, setLocation] = useState('');
@@ -79,6 +80,10 @@ export default function App() {
   useEffect(() => {
     if (selectedConcert) {
       setLocation(`${selectedConcert.city} · ${selectedConcert.venue}`);
+      const newPriceTiers = getPriceTiersForConcert(selectedConcert);
+      setAvailablePriceTiers(newPriceTiers);
+      // 设置默认价格为新挡位的最高价
+      setPrice(newPriceTiers[newPriceTiers.length - 1]);
     }
   }, [selectedConcert]);
 
@@ -187,10 +192,10 @@ export default function App() {
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <h1 className="text-4xl font-black tracking-tighter text-white leading-none mb-2 uppercase font-display">
-                    {selectedConcert?.tourName || '闹天宫'} <span className="text-purple-400">电子票生成器</span>
+                    {selectedConcert?.tourName || '闹天宫'} <span className="text-purple-400">电子票根生成器</span>
                   </h1>
                   <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-zinc-500">
-                    2023-2025 大航海 · {selectedConcert?.tourName || '闹天宫'} 巡回演唱会
+                    2024-2025 大航海 · {selectedConcert?.tourName || '闹天宫'} 巡回演唱会
                   </p>
                 </motion.div>
               </header>
@@ -225,8 +230,8 @@ export default function App() {
                           onChange={(e) => setPrice(e.target.value)}
                           className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none transition-all cursor-pointer text-sm"
                         >
-                          {PRICE_TIERS.map(p => (
-                            <option key={p} value={p} className="bg-zinc-900">¥{p}</option>
+                          {availablePriceTiers.map(p => (
+                            <option key={p} value={p} className="bg-zinc-900">{getCurrencyForConcert(selectedConcert!)}{p}</option>
                           ))}
                         </select>
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
@@ -343,8 +348,7 @@ export default function App() {
                     price={price} 
                     area={area}
                     seat={seat} 
-                    location={location}
-                  />
+                    location={location}                    currency={getCurrencyForConcert(selectedConcert!)}                  />
                 </div>
               </div>
 
@@ -415,7 +419,7 @@ export default function App() {
   );
 }
 
-function TicketView({ concert, userName, price, area, seat, location }: { concert: Concert, userName: string, price: string, area: string, seat: string, location: string }) {
+function TicketView({ concert, userName, price, area, seat, location, currency }: { concert: Concert, userName: string, price: string, area: string, seat: string, location: string, currency: string }) {
   const fullDate = concert.date; // e.g. 2025-03-22
   const displayDate = fullDate.replace(/-/g, ' / ');
 
@@ -516,7 +520,7 @@ function TicketView({ concert, userName, price, area, seat, location }: { concer
           </div>
           <div className="space-y-1 text-right">
             <p className="text-[8px] font-bold text-purple-200/70 uppercase tracking-widest">票价 / PRICE</p>
-            <p className="text-lg font-bold text-white tracking-tight leading-none">¥{price}</p>
+            <p className="text-lg font-bold text-white tracking-tight leading-none">{currency}{price}</p>
           </div>
           
           {userName && (

@@ -57,6 +57,23 @@ function safePassFilename(city?: string): string {
   return `lay_zhang_${normalizedCity || 'concert'}.pkpass`;
 }
 
+function getCurrencyForConcert(concert: { city?: string }): string {
+  if (concert.city === '吉隆坡') {
+    return 'RM';
+  }
+  if (concert.city === '雅加达') {
+    return 'Rp';
+  }
+  if (concert.city === '横滨') {
+    return '円';
+  }
+  if (concert.city === '首尔') {
+    return '₩';
+  }
+
+  return '¥';
+}
+
 // Cache for image buffers to speed up generation
 const imageCache: Record<string, Buffer> = {};
 
@@ -267,10 +284,12 @@ async function startServer() {
         value: seat || '\u968f\u673a'
       });
 
+      const priceCurrency = getCurrencyForConcert(concert);
+
       pass.secondaryFields.push({
         key: 'price',
         label: '\u7968\u6863',
-        value: `¥${price}`
+        value: `${priceCurrency}${price}`
       });
 
       pass.auxiliaryFields.push({

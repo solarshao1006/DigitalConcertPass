@@ -192,10 +192,10 @@ export default function App() {
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <h1 className="text-4xl font-black tracking-tighter text-white leading-none mb-2 uppercase font-display">
-                    {selectedConcert?.tourName || '闹天宫'} <span className="text-purple-400">电子票根生成器</span>
+                    <span className="text-purple-400">电子票根生成器</span>
                   </h1>
                   <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-zinc-500">
-                    2024-2025 大航海 · {selectedConcert?.tourName || '闹天宫'} 巡回演唱会
+                    2024-2025大航海巡回演唱会
                   </p>
                 </motion.div>
               </header>
@@ -313,6 +313,12 @@ export default function App() {
                 </p>
                 <p className="mt-2 text-[11px] text-zinc-500">
                   Solar | <a href="https://github.com/solarshao1006" target="_blank" rel="noreferrer" className="underline underline-offset-4">github.com/solarshao1006</a>
+                </p>
+                <p className="mt-1 text-[11px] text-zinc-500">
+                  {'📕 假模特小勺同学'}
+                </p>
+                <p className="mt-1 text-[11px] text-zinc-500">
+                  {'🧣 误入米缸的芯'}
                 </p>
               </footer>
             </motion.div>

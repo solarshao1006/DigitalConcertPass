@@ -74,6 +74,35 @@ function getCurrencyForConcert(concert: { city?: string }): string {
   return '¥';
 }
 
+function getFrontAreaText(area?: string): string {
+  const normalized = (area || '').trim().replace(/\s+/g, ' ');
+  if (!normalized) {
+    return '\u5185\u573a';
+  }
+
+  const directPatterns = [
+    /[A-Za-z0-9]+\s*区/u,
+    /VIP/u,
+    /\u5185\u573a/u,
+    /\u770b\u53f0/u,
+    /GA/u,
+  ];
+
+  for (const pattern of directPatterns) {
+    const match = normalized.match(pattern);
+    if (match?.[0]) {
+      return match[0].replace(/\s+/g, '');
+    }
+  }
+
+  const compact = normalized.replace(/\s+/g, '');
+  if (compact.length <= 6) {
+    return compact;
+  }
+
+  return `${compact.slice(0, 6)}\u2026`;
+}
+
 // Cache for image buffers to speed up generation
 const imageCache: Record<string, Buffer> = {};
 
@@ -267,18 +296,21 @@ async function startServer() {
 
       // Event Ticket specific fields
       const concertYear = concert.date?.slice(0, 4) || '2025';
-      const eventTitle = `${concertYear} 张艺兴 [大航海${concert.season}·${concert.tourName || '\u95f9\u5929\u5bab'}]巡回演唱会 ${concert.city}站`;
+      const fullEventTitle = `${concertYear} 张艺兴 [大航海${concert.season}·${concert.tourName || '\u95f9\u5929\u5bab'}]巡回演唱会 ${concert.city}站`;
+      const shortEventTitle = `大航海${concert.season}·${concert.tourName || '\u95f9\u5929\u5bab'} ${concert.city}站`;
 
       pass.primaryFields.push({
         key: 'event',
         label: '\u5de1\u6f14',
-        value: eventTitle
+        value: shortEventTitle
       });
+
+      const frontAreaText = getFrontAreaText(area);
 
       pass.secondaryFields.push({
         key: 'area',
         label: '\u533a\u57df',
-        value: area || '\u5185\u573a'
+        value: frontAreaText
       });
 
       pass.secondaryFields.push({
@@ -326,6 +358,18 @@ async function startServer() {
         key: 'header-location',
         label: '\u57ce\u5e02',
         value: concert.city
+      });
+
+      pass.backFields.push({
+        key: 'event-title',
+        label: '\u5de1\u6f14',
+        value: fullEventTitle
+      });
+
+      pass.backFields.push({
+        key: 'area-full',
+        label: '\u533a\u57df',
+        value: area || '\u5185\u573a'
       });
 
       pass.backFields.push({

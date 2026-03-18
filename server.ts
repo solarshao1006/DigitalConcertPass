@@ -327,12 +327,6 @@ async function startServer() {
         value: concert.venue
       });
 
-      pass.secondaryFields.push({
-        key: 'datetime',
-        label: '\u65f6\u95f4',
-        value: `${concert.date.replace(/-/g, '/')} ${concert.time}`
-      });
-
       pass.auxiliaryFields.push({
         key: 'price',
         label: '\u7968\u6863',
@@ -370,6 +364,12 @@ async function startServer() {
         key: 'area-full',
         label: '\u533a\u57df',
         value: area || '\u5185\u573a'
+      });
+
+      pass.backFields.push({
+        key: 'time-full',
+        label: '\u65f6\u95f4',
+        value: `${concert.date.replace(/-/g, '/')} ${concert.time}`
       });
 
       pass.backFields.push({

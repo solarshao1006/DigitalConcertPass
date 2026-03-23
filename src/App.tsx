@@ -77,16 +77,16 @@ const getConcertBackgroundImage = (concert: Concert) => {
 };
 
 const getConcertLabel = (concert: Concert) =>
-  isDramaConcert(concert) ? `话剧《${concert.tourName}》` : concert.tourName;
+  concert.tourName;
 
 const getConcertEnglishLabel = (concert: Concert) =>
-  isDramaConcert(concert) ? 'DUNHUANG' : 'LAY ZHANG';
+  isDramaConcert(concert) ? '' : 'LAY ZHANG';
 
 const getConcertSubLabel = (concert: Concert) =>
-  isDramaConcert(concert) ? 'DRAMA TICKET' : `GRANDLINE ${concert.season}`;
+  isDramaConcert(concert) ? `${concert.tourName} ${concert.city}站` : `GRANDLINE ${concert.season}`;
 
 const getConcertStopLabel = (concert: Concert) =>
-  `${concert.city}${isDramaConcert(concert) ? '场' : '站'}`;
+  `${concert.city}站`;
 
 export default function App() {
   const [selectedConcert, setSelectedConcert] = useState<Concert | null>(CONCERTS[0] ?? null);
@@ -479,9 +479,11 @@ function TicketView({
                 {ticketTitle}
               </h3>
               <div className="mt-1">
-                <h3 className="text-lg font-black text-white leading-none tracking-tighter uppercase drop-shadow-md">
-                  {englishLabel}
-                </h3>
+                {englishLabel ? (
+                  <h3 className="text-lg font-black text-white leading-none tracking-tighter uppercase drop-shadow-md">
+                    {englishLabel}
+                  </h3>
+                ) : null}
                 <p className="font-serif italic text-purple-200 text-[8px] mt-0.5 drop-shadow-sm leading-none">
                   {subLabel}
                 </p>

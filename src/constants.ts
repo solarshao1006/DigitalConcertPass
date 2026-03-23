@@ -44,19 +44,19 @@ export const CONCERTS: Concert[] = [
   { id: 'xm-4-1', city: '厦门', date: '2024-11-02', time: '19:30', venue: '厦门奥林匹克中心凤凰体育馆', tourName: 'STEP', season: 4 },
   { id: 'zz-4-1', city: '郑州', date: '2025-02-28', time: '19:30', venue: '郑州奥体中心体育馆', tourName: 'STEP', season: 4 },
 
-  // Drama (敦煌)
-  { id: 'bj-dh-1', city: '北京', date: '2024-12-07', time: '19:30', venue: '国家速滑馆“冰丝带”', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'bj-dh-2', city: '北京', date: '2024-12-08', time: '19:30', venue: '国家速滑馆“冰丝带”', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'bj-dh-3', city: '北京', date: '2024-12-09', time: '19:30', venue: '国家速滑馆“冰丝带”', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'sh-dh-1', city: '上海', date: '2024-12-13', time: '19:30', venue: '梅赛德斯-奔驰文化中心', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'sh-dh-2', city: '上海', date: '2024-12-14', time: '19:30', venue: '梅赛德斯-奔驰文化中心', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'sh-dh-3', city: '上海', date: '2024-12-15', time: '19:30', venue: '梅赛德斯-奔驰文化中心', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'nj-dh-1', city: '南京', date: '2025-06-07', time: '19:30', venue: '梦之蓝青奥体育公园体育馆', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'nj-dh-2', city: '南京', date: '2025-06-08', time: '19:30', venue: '梦之蓝青奥体育公园体育馆', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'lz-dh-1', city: '兰州', date: '2025-06-21', time: '19:30', venue: '兰州奥体中心郁金香综合馆', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'lz-dh-2', city: '兰州', date: '2025-06-22', time: '19:30', venue: '兰州奥体中心郁金香综合馆', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'cd-dh-1', city: '成都', date: '2025-07-05', time: '19:30', venue: '五粮液文化体育中心综合体育馆', tourName: '敦煌', season: 0, type: 'drama' },
-  { id: 'cd-dh-2', city: '成都', date: '2025-07-06', time: '19:30', venue: '五粮液文化体育中心综合体育馆', tourName: '敦煌', season: 0, type: 'drama' }
+  // Drama (受到召唤·敦煌)
+  { id: 'bj-dh-1', city: '北京', date: '2024-12-07', time: '19:30', venue: '国家速滑馆“冰丝带”', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'bj-dh-2', city: '北京', date: '2024-12-08', time: '19:30', venue: '国家速滑馆“冰丝带”', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'bj-dh-3', city: '北京', date: '2024-12-09', time: '19:30', venue: '国家速滑馆“冰丝带”', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'sh-dh-1', city: '上海', date: '2024-12-13', time: '19:30', venue: '梅赛德斯-奔驰文化中心', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'sh-dh-2', city: '上海', date: '2024-12-14', time: '19:30', venue: '梅赛德斯-奔驰文化中心', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'sh-dh-3', city: '上海', date: '2024-12-15', time: '19:30', venue: '梅赛德斯-奔驰文化中心', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'nj-dh-1', city: '南京', date: '2025-06-07', time: '19:30', venue: '梦之蓝青奥体育公园体育馆', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'nj-dh-2', city: '南京', date: '2025-06-08', time: '19:30', venue: '梦之蓝青奥体育公园体育馆', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'lz-dh-1', city: '兰州', date: '2025-06-21', time: '19:30', venue: '兰州奥体中心郁金香综合馆', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'lz-dh-2', city: '兰州', date: '2025-06-22', time: '19:30', venue: '兰州奥体中心郁金香综合馆', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'cd-dh-1', city: '成都', date: '2025-07-05', time: '19:30', venue: '五粮液文化体育中心综合体育馆', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
+  { id: 'cd-dh-2', city: '成都', date: '2025-07-06', time: '19:30', venue: '五粮液文化体育中心综合体育馆', tourName: '受到召唤·敦煌', season: 0, type: 'drama' },
 ];
 
 export const PRICE_TIERS = ['520', '1007', '1314', '1548', '1991'];
@@ -67,32 +67,26 @@ export const getPriceTiersForConcert = (concert: Concert): string[] => {
     return DRAMA_PRICE_TIERS;
   }
 
-  // 鸟巢特殊价格
   if (concert.venue.includes('鸟巢')) {
     return ['380', '580', '780', '980', '1380'];
   }
-  
-  // 吉隆坡特殊价格
+
   if (concert.city === '吉隆坡') {
     return ['398', '598', '798', '998'];
   }
-  
-  // 雅加达特殊价格
+
   if (concert.city === '雅加达') {
     return ['1850000', '2350000', '2600000', '4600000'];
   }
-  
-  // 横滨特殊价格
+
   if (concert.city === '横滨') {
     return ['8800', '13000', '18000', '26000'];
   }
-  
-  // 首尔特殊价格
+
   if (concert.city === '首尔') {
     return ['154000'];
   }
-  
-  // 默认价格挡位
+
   return PRICE_TIERS;
 };
 

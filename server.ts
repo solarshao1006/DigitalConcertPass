@@ -175,7 +175,7 @@ function getPassPosterCandidates(concert: PassConcert): string[] {
 
 function getPassHeaderTitle(concert: PassConcert): string {
   if (isDramaConcert(concert)) {
-    return 'Dunhuang · Drama';
+    return '受到召唤·敦煌';
   }
 
   if (concert.season === 4) {
@@ -191,7 +191,7 @@ function getPassHeaderTitle(concert: PassConcert): string {
 
 function getPassDescription(concert: PassConcert): string {
   if (isDramaConcert(concert)) {
-    return `话剧《${concert.tourName}》 - ${concert.city}`;
+    return `${concert.tourName} - ${concert.city}站`;
   }
 
   return `张艺兴大航海${concert.season} · ${concert.tourName} - ${concert.city}`;
@@ -201,7 +201,7 @@ function getFullEventTitle(concert: PassConcert): string {
   const year = concert.date?.slice(0, 4) || '2025';
 
   if (isDramaConcert(concert)) {
-    return `${year} 话剧《${concert.tourName}》 ${concert.city}场`;
+    return `${year} ${concert.tourName} ${concert.city}站`;
   }
 
   return `${year} 张艺兴 [大航海${concert.season}·${concert.tourName || '闹天宫'}]巡回演唱会 ${concert.city}站`;
@@ -209,7 +209,7 @@ function getFullEventTitle(concert: PassConcert): string {
 
 function getShortEventTitle(concert: PassConcert): string {
   if (isDramaConcert(concert)) {
-    return `话剧《${concert.tourName}》 ${concert.city}场`;
+    return `${concert.tourName} ${concert.city}站`;
   }
 
   return `大航海${concert.season}·${concert.tourName || '闹天宫'} ${concert.city}站`;
@@ -279,19 +279,21 @@ async function startServer() {
         console.warn('Failed to load poster image for pass', error);
       }
 
-      try {
-        const logoBuffer = getPassAssetBuffer('logo', [
-          path.join(__dirname, 'public', 'imgs', 'logo.png'),
-          path.join(__dirname, 'imgs', 'logo.png'),
-          path.join(__dirname, 'public', 'imgs', 'icon.png'),
-          path.join(__dirname, 'imgs', 'icon.png'),
-        ]);
+      if (!isDramaConcert(concert)) {
+        try {
+          const logoBuffer = getPassAssetBuffer('logo', [
+            path.join(__dirname, 'public', 'imgs', 'logo.png'),
+            path.join(__dirname, 'imgs', 'logo.png'),
+            path.join(__dirname, 'public', 'imgs', 'icon.png'),
+            path.join(__dirname, 'imgs', 'icon.png'),
+          ]);
 
-        if (logoBuffer) {
-          buffers['logo.png'] = logoBuffer;
+          if (logoBuffer) {
+            buffers['logo.png'] = logoBuffer;
+          }
+        } catch (error) {
+          console.warn('Failed to load logo image for pass', error);
         }
-      } catch (error) {
-        console.warn('Failed to load logo image for pass', error);
       }
 
       try {
@@ -339,7 +341,7 @@ async function startServer() {
 
       pass.primaryFields.push({
         key: 'event',
-        label: isDramaConcert(concert) ? '剧目' : '巡演',
+        label: isDramaConcert(concert) ? '主题' : '巡演',
         value: getShortEventTitle(concert),
       });
 
@@ -389,7 +391,7 @@ async function startServer() {
 
       pass.backFields.push({
         key: 'event-title',
-        label: isDramaConcert(concert) ? '剧目' : '巡演',
+        label: isDramaConcert(concert) ? '主题' : '巡演',
         value: getFullEventTitle(concert),
       });
 

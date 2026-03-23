@@ -1,44 +1,53 @@
 import express from 'express';
+import fs from 'fs';
 import { PKPass } from 'passkit-generator';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
+
+type PassConcert = {
+  id: string;
+  city: string;
+  date: string;
+  time: string;
+  venue: string;
+  tourName: string;
+  season: number;
+  type?: 'concert' | 'drama';
+};
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-/**
- * Normalizes PEM strings from environment variables.
- * Handles literal \n characters, surrounding quotes, and potential base64 encoding.
- */
+const imageCache: Record<string, Buffer> = {};
+
+function isDramaConcert(concert: PassConcert): boolean {
+  return concert.type === 'drama';
+}
+
 function normalizePEM(pem?: string): string {
   if (!pem) return '';
-  
+
   let trimmed = pem.trim();
-  
-  // Remove surrounding quotes if present (common in some env setups)
-  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || 
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
     trimmed = trimmed.substring(1, trimmed.length - 1);
   }
-  
-  // Check if it's base64 encoded (common workaround for env vars)
+
   if (!trimmed.startsWith('-----') && /^[A-Za-z0-9+/=\s]+$/.test(trimmed)) {
     try {
       const decoded = Buffer.from(trimmed, 'base64').toString('utf-8');
       if (decoded.includes('-----BEGIN')) {
         trimmed = decoded;
       }
-    } catch (e) {
-      // Not base64, continue
+    } catch {
+      // Keep original text if it was not base64.
     }
   }
 
-  // Replace literal \n characters with actual newlines
   let result = trimmed.replace(/\\n/g, '\n');
-  
-  // If it's a single line but contains PEM headers, it might have lost its newlines
-  // node-forge (used by passkit-generator) is very strict about PEM formatting.
+
   if (result.includes('-----BEGIN') && !result.includes('\n')) {
-    // This is a last-resort fix for single-line PEMs
     result = result
       .replace(/-----BEGIN ([A-Z ]+)-----/, '-----BEGIN $1-----\n')
       .replace(/-----END ([A-Z ]+)-----/, '\n-----END $1-----')
@@ -57,36 +66,21 @@ function safePassFilename(city?: string): string {
   return `lay_zhang_${normalizedCity || 'concert'}.pkpass`;
 }
 
-function getCurrencyForConcert(concert: { city?: string }): string {
-  if (concert.city === '吉隆坡') {
-    return 'RM';
-  }
-  if (concert.city === '雅加达') {
-    return 'Rp';
-  }
-  if (concert.city === '横滨') {
-    return '円';
-  }
-  if (concert.city === '首尔') {
-    return '₩';
-  }
-
+function getCurrencyForConcert(concert: Pick<PassConcert, 'city'>): string {
+  if (concert.city === '吉隆坡') return 'RM';
+  if (concert.city === '雅加达') return 'Rp';
+  if (concert.city === '横滨') return '円';
+  if (concert.city === '首尔') return '₩';
   return '¥';
 }
 
 function getFrontAreaText(area?: string): string {
   const normalized = (area || '').trim().replace(/\s+/g, ' ');
   if (!normalized) {
-    return '\u5185\u573a';
+    return '内场';
   }
 
-  const directPatterns = [
-    /[A-Za-z0-9]+\s*区/u,
-    /VIP/u,
-    /\u5185\u573a/u,
-    /\u770b\u53f0/u,
-    /GA/u,
-  ];
+  const directPatterns = [/[A-Za-z0-9]+\s*区/u, /VIP/u, /内场/u, /看台/u, /GA/u];
 
   for (const pattern of directPatterns) {
     const match = normalized.match(pattern);
@@ -100,11 +94,8 @@ function getFrontAreaText(area?: string): string {
     return compact;
   }
 
-  return `${compact.slice(0, 6)}\u2026`;
+  return `${compact.slice(0, 6)}…`;
 }
-
-// Cache for image buffers to speed up generation
-const imageCache: Record<string, Buffer> = {};
 
 function getPassAssetBuffer(cacheKey: string, candidates: string[]): Buffer | undefined {
   if (imageCache[cacheKey]) {
@@ -121,124 +112,188 @@ function getPassAssetBuffer(cacheKey: string, candidates: string[]): Buffer | un
   return buffer;
 }
 
+function getPassBackgroundCandidates(concert: PassConcert): string[] {
+  if (isDramaConcert(concert)) {
+    return [
+      path.join(__dirname, 'public', 'imgs', 'pass', 'background_dunhuang.png'),
+      path.join(__dirname, 'public', 'imgs', 'pass', 'backgroud_dunhuang.png'),
+      path.join(__dirname, 'imgs', 'pass', 'background_dunhuang.png'),
+      path.join(__dirname, 'imgs', 'pass', 'backgroud_dunhuang.png'),
+    ];
+  }
+
+  const season = concert.season || 5;
+  return [
+    path.join(__dirname, 'public', 'imgs', 'pass', `grandline${season}_bg.png`),
+    path.join(__dirname, 'imgs', 'pass', `grandline${season}_bg.png`),
+  ];
+}
+
+function getPassPosterCandidates(concert: PassConcert): string[] {
+  if (isDramaConcert(concert)) {
+    return [
+      path.join(__dirname, 'public', 'imgs', 'pass', 'dunhuang', 'poster.png'),
+      path.join(__dirname, 'imgs', 'pass', 'dunhuang', 'poster.png'),
+    ];
+  }
+
+  const cityMap: Record<string, string> = {
+    北京: 'beijing',
+    成都: 'chengdu',
+    海口: 'haikou',
+    上海: 'shanghai',
+    宁波: 'ningbo',
+    南京: 'nanjing',
+    深圳: 'shenzhen',
+    广州: 'guangzhou',
+    西安: 'xian',
+    横滨: 'yokohama',
+    雅加达: 'jakarta',
+    首尔: 'seoul',
+    吉隆坡: 'kualalumpur',
+    厦门: 'xiamen',
+    郑州: 'zhengzhou',
+    兰州: 'lanzhou',
+  };
+
+  const season = concert.season || 5;
+  const pinyin = cityMap[concert.city] || 'beijing';
+  let posterFileName = `${pinyin}${season}.jpg`;
+
+  if (season === 5 && concert.city === '北京' && concert.venue.includes('鸟巢')) {
+    if (concert.date === '2025-10-06') posterFileName = 'beijing5_niaochao_day1.jpg';
+    else if (concert.date === '2025-10-07') posterFileName = 'beijing5_niaochao_day2.jpg';
+    else posterFileName = 'beijing5.jpg';
+  }
+
+  const posterStem = posterFileName.replace(/\.jpg$/i, '');
+  return [
+    path.join(__dirname, 'public', 'imgs', 'pass', `grandline${season}`, `${posterStem}.png`),
+    path.join(__dirname, 'imgs', 'pass', `grandline${season}`, `${posterStem}.png`),
+  ];
+}
+
+function getPassHeaderTitle(concert: PassConcert): string {
+  if (isDramaConcert(concert)) {
+    return 'Dunhuang · Drama';
+  }
+
+  if (concert.season === 4) {
+    return 'Grandline4 · Step';
+  }
+
+  if (concert.season === 5) {
+    return 'Grandline5 · 闹天宫';
+  }
+
+  return `Grandline${concert.season} · ${concert.tourName}`;
+}
+
+function getPassDescription(concert: PassConcert): string {
+  if (isDramaConcert(concert)) {
+    return `话剧《${concert.tourName}》 - ${concert.city}`;
+  }
+
+  return `张艺兴大航海${concert.season} · ${concert.tourName} - ${concert.city}`;
+}
+
+function getFullEventTitle(concert: PassConcert): string {
+  const year = concert.date?.slice(0, 4) || '2025';
+
+  if (isDramaConcert(concert)) {
+    return `${year} 话剧《${concert.tourName}》 ${concert.city}场`;
+  }
+
+  return `${year} 张艺兴 [大航海${concert.season}·${concert.tourName || '闹天宫'}]巡回演唱会 ${concert.city}站`;
+}
+
+function getShortEventTitle(concert: PassConcert): string {
+  if (isDramaConcert(concert)) {
+    return `话剧《${concert.tourName}》 ${concert.city}场`;
+  }
+
+  return `大航海${concert.season}·${concert.tourName || '闹天宫'} ${concert.city}站`;
+}
+
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
-  // API Route for generating .pkpass
   app.post('/api/generate-pass', async (req, res) => {
     try {
-      const { concert, userName, price, area, seat, location } = req.body;
+      const { concert, userName, price, area, seat } = req.body as {
+        concert: PassConcert;
+        userName?: string;
+        price?: string;
+        area?: string;
+        seat?: string;
+      };
 
-      // Normalize certificates
       const wwdr = normalizePEM(process.env.APPLE_WWDR_CERT);
       const signerCert = normalizePEM(process.env.APPLE_SIGNER_CERT);
       const signerKey = normalizePEM(process.env.APPLE_SIGNER_KEY);
       const passphrase = process.env.APPLE_SIGNER_KEY_PASSPHRASE?.trim() || undefined;
 
-      const hasCerts = wwdr.includes('-----BEGIN') && 
-                       signerCert.includes('-----BEGIN') && 
-                       signerKey.includes('-----BEGIN');
+      const hasCerts =
+        wwdr.includes('-----BEGIN') &&
+        signerCert.includes('-----BEGIN') &&
+        signerKey.includes('-----BEGIN');
 
       if (!hasCerts) {
-        console.error('Missing or invalid certificates in environment variables');
-        const missing = [];
+        const missing: string[] = [];
         if (!wwdr.includes('-----BEGIN')) missing.push('APPLE_WWDR_CERT');
         if (!signerCert.includes('-----BEGIN')) missing.push('APPLE_SIGNER_CERT');
         if (!signerKey.includes('-----BEGIN')) missing.push('APPLE_SIGNER_KEY');
-        
+
         return res.status(400).json({
           error: 'Missing or Invalid Certificates',
-          message: `Apple Wallet passes (.pkpass) MUST be digitally signed. The following certificates are missing or invalid: ${missing.join(', ')}. Ensure they are in PEM format (starting with -----BEGIN) or base64 encoded PEM.`
+          message: `Apple Wallet passes (.pkpass) must be signed. Missing or invalid values: ${missing.join(', ')}.`,
         });
       }
 
-      // Fetch thumbnail image (poster)
       const buffers: Record<string, Buffer> = {};
-      
-      // Load background image from pre-generated pass assets
+
       try {
-        const season = concert.season || 5;
-        const cacheKey = `bg-${season}`;
-
-        const backgroundBuffer = getPassAssetBuffer(cacheKey, [
-          path.join(__dirname, 'public', 'imgs', 'pass', `grandline${season}_bg.png`),
-          path.join(__dirname, 'imgs', 'pass', `grandline${season}_bg.png`),
-        ]);
-
+        const backgroundKey = isDramaConcert(concert)
+          ? 'bg-dunhuang'
+          : `bg-${concert.season || 5}`;
+        const backgroundBuffer = getPassAssetBuffer(backgroundKey, getPassBackgroundCandidates(concert));
         if (backgroundBuffer) {
           buffers['background.png'] = backgroundBuffer;
         }
-      } catch (e) {
-        console.warn('Failed to load background image for pass', e);
+      } catch (error) {
+        console.warn('Failed to load background image for pass', error);
       }
 
-      // Load thumbnail image (poster) from pre-generated pass assets
       try {
-        const season = concert.season || 5;
-        let posterFileName = '';
-        const cityMap: Record<string, string> = {
-          '北京': 'beijing',
-          '成都': 'chengdu',
-          '海口': 'haikou',
-          '上海': 'shanghai',
-          '宁波': 'ningbo',
-          '南京': 'nanjing',
-          '深圳': 'shenzhen',
-          '广州': 'guangzhou',
-          '西安': 'xian',
-          '横滨': 'yokohama',
-          '雅加达': 'jakarta',
-          '首尔': 'seoul',
-          '吉隆坡': 'kualalumpur',
-          '厦门': 'xiamen',
-          '郑州': 'zhengzhou'
-        };
-
-        const pinyin = cityMap[concert.city] || 'beijing';
-
-        if (season === 5 && concert.city === '北京' && concert.venue.includes('鸟巢')) {
-          if (concert.date === '2025-10-06') posterFileName = 'beijing5_niaochao_day1.jpg';
-          else if (concert.date === '2025-10-07') posterFileName = 'beijing5_niaochao_day2.jpg';
-          else posterFileName = 'beijing5.jpg';
-        } else {
-          posterFileName = `${pinyin}${season}.jpg`;
-        }
-
-        const cacheKey = `poster-${season}-${posterFileName}`;
-        const posterStem = posterFileName.replace(/\.jpg$/i, '');
-        const posterBuffer = getPassAssetBuffer(cacheKey, [
-          path.join(__dirname, 'public', 'imgs', 'pass', `grandline${season}`, `${posterStem}.png`),
-          path.join(__dirname, 'imgs', 'pass', `grandline${season}`, `${posterStem}.png`),
-        ]);
-
+        const posterKey = isDramaConcert(concert)
+          ? 'poster-dunhuang'
+          : `poster-${concert.season || 5}-${concert.city}-${concert.date}`;
+        const posterBuffer = getPassAssetBuffer(posterKey, getPassPosterCandidates(concert));
         if (posterBuffer) {
           buffers['thumbnail.png'] = posterBuffer;
         }
-      } catch (e) {
-        console.warn('Failed to load poster image for pass', e);
+      } catch (error) {
+        console.warn('Failed to load poster image for pass', error);
       }
 
-      // Load logo image from local filesystem
       try {
-        const cacheKey = 'logo';
-        if (imageCache[cacheKey]) {
-          buffers['logo.png'] = imageCache[cacheKey];
-        } else {
-          const logoPath = path.join(__dirname, 'public', 'imgs', 'logo.png');
-          if (fs.existsSync(logoPath)) {
-            const buffer = fs.readFileSync(logoPath);
-            imageCache[cacheKey] = buffer;
-            buffers['logo.png'] = buffer;
-          }
+        const logoBuffer = getPassAssetBuffer('logo', [
+          path.join(__dirname, 'public', 'imgs', 'logo.png'),
+          path.join(__dirname, 'imgs', 'logo.png'),
+          path.join(__dirname, 'public', 'imgs', 'icon.png'),
+          path.join(__dirname, 'imgs', 'icon.png'),
+        ]);
+
+        if (logoBuffer) {
+          buffers['logo.png'] = logoBuffer;
         }
-      } catch (e) {
-        console.warn('Failed to load logo image for pass', e);
+      } catch (error) {
+        console.warn('Failed to load logo image for pass', error);
       }
 
-      // Apple Wallet validators expect icon assets to be present.
       try {
         const icon1x = getPassAssetBuffer('icon-1x', [
           path.join(__dirname, 'public', 'imgs', 'pass', 'icon.png'),
@@ -256,11 +311,10 @@ async function startServer() {
         if (icon1x) buffers['icon.png'] = icon1x;
         if (icon2x) buffers['icon@2x.png'] = icon2x;
         if (icon3x) buffers['icon@3x.png'] = icon3x;
-      } catch (e) {
-        console.warn('Failed to load icon images for pass', e);
+      } catch (error) {
+        console.warn('Failed to load icon images for pass', error);
       }
 
-      // Create a new pass
       const certificates = {
         wwdr: Buffer.from(wwdr, 'utf-8'),
         signerCert: Buffer.from(signerCert, 'utf-8'),
@@ -268,131 +322,105 @@ async function startServer() {
         ...(passphrase ? { signerKeyPassphrase: passphrase } : {}),
       };
 
-      const passHeaderTitle =
-        concert.season === 4
-          ? 'Grandline4 \u00b7 Step'
-          : concert.season === 5
-            ? 'Grandline5 \u00b7 \u95f9\u5929\u5bab'
-            : `Grandline${concert.season} \u00b7 ${concert.tourName}`;
-
-      const pass = new PKPass(
-        buffers,
-        certificates,
-        {
-          formatVersion: 1,
-          passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || 'pass.com.example.concert',
-          teamIdentifier: process.env.APPLE_TEAM_ID || 'TEAMID123',
-          organizationName: 'Chromosome Entertainment',
-          serialNumber: concert.id + '-' + Date.now(),
-          description: `\u5f20\u827a\u5174\u5927\u822a\u6d77${concert.season} \u00b7 ${concert.tourName} - ${concert.city}`,
-          backgroundColor: 'rgb(236, 228, 248)',
-          foregroundColor: 'rgb(255, 255, 255)',
-          labelColor: 'rgb(255, 255, 255)',
-          logoText: passHeaderTitle,
-        }
-      );
+      const pass = new PKPass(buffers, certificates, {
+        formatVersion: 1,
+        passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || 'pass.com.example.concert',
+        teamIdentifier: process.env.APPLE_TEAM_ID || 'TEAMID123',
+        organizationName: 'Chromosome Entertainment',
+        serialNumber: `${concert.id}-${Date.now()}`,
+        description: getPassDescription(concert),
+        backgroundColor: 'rgb(236, 228, 248)',
+        foregroundColor: 'rgb(255, 255, 255)',
+        labelColor: 'rgb(255, 255, 255)',
+        logoText: getPassHeaderTitle(concert),
+      });
 
       pass.type = 'eventTicket';
 
-      // Event Ticket specific fields
-      const concertYear = concert.date?.slice(0, 4) || '2025';
-      const fullEventTitle = `${concertYear} 张艺兴 [大航海${concert.season}·${concert.tourName || '\u95f9\u5929\u5bab'}]巡回演唱会 ${concert.city}站`;
-      const shortEventTitle = `大航海${concert.season}·${concert.tourName || '\u95f9\u5929\u5bab'} ${concert.city}站`;
-
       pass.primaryFields.push({
         key: 'event',
-        label: '\u5de1\u6f14',
-        value: shortEventTitle
+        label: isDramaConcert(concert) ? '剧目' : '巡演',
+        value: getShortEventTitle(concert),
       });
-
-      const frontAreaText = getFrontAreaText(area);
 
       pass.secondaryFields.push({
         key: 'area',
-        label: '\u533a\u57df',
-        value: frontAreaText
+        label: '区域',
+        value: getFrontAreaText(area),
       });
 
       pass.secondaryFields.push({
         key: 'seat',
-        label: '\u5ea7\u4f4d',
-        value: seat || '\u968f\u673a'
+        label: '座位',
+        value: seat || '随机',
       });
-
-      const priceCurrency = getCurrencyForConcert(concert);
 
       pass.secondaryFields.push({
         key: 'location',
-        label: '\u573a\u9986',
-        value: concert.venue
+        label: '场馆',
+        value: concert.venue,
       });
 
       pass.auxiliaryFields.push({
         key: 'price',
-        label: '\u7968\u6863',
-        value: `${priceCurrency}${price}`
+        label: '票档',
+        value: `${getCurrencyForConcert(concert)}${price || ''}`,
       });
 
       if (userName) {
         pass.auxiliaryFields.push({
           key: 'holder',
-          label: '\u6301\u7968',
-          value: userName
+          label: '持票',
+          value: userName,
         });
       }
 
-      // Header fields (visible when folded)
       pass.headerFields.push({
         key: 'header-date',
-        label: '\u65f6\u95f4',
-        value: `${concert.date.replace(/-/g, '/')} ${concert.time}`
+        label: '时间',
+        value: `${concert.date.replace(/-/g, '/')} ${concert.time}`,
       });
 
       pass.headerFields.push({
         key: 'header-location',
-        label: '\u57ce\u5e02',
-        value: concert.city
+        label: '城市',
+        value: concert.city,
       });
 
       pass.backFields.push({
         key: 'event-title',
-        label: '\u5de1\u6f14',
-        value: fullEventTitle
+        label: isDramaConcert(concert) ? '剧目' : '巡演',
+        value: getFullEventTitle(concert),
       });
 
       pass.backFields.push({
         key: 'area-full',
-        label: '\u533a\u57df',
-        value: area || '\u5185\u573a'
+        label: '区域',
+        value: area || '内场',
       });
 
       pass.backFields.push({
         key: 'time-full',
-        label: '\u65f6\u95f4',
-        value: `${concert.date.replace(/-/g, '/')} ${concert.time}`
+        label: '时间',
+        value: `${concert.date.replace(/-/g, '/')} ${concert.time}`,
       });
 
       pass.backFields.push({
         key: 'notice',
-        label: '\u987b\u77e5',
-        value: '\u8bf7\u51ed\u6b64\u7535\u5b50\u7968\u6839\u53ca\u6709\u6548\u8eab\u4efd\u8bc1\u4ef6\u5165\u573a\u3002\u672c\u7968\u6839\u4ec5\u4f9b\u7eaa\u5ff5\uff0c\u975e\u5b98\u65b9\u552f\u4e00\u5165\u573a\u51ed\u8bc1\u3002'
+        label: '须知',
+        value: '请凭此电子票根及有效身份证件入场。本票根仅供纪念，非官方唯一入场凭证。',
       });
 
-      // Barcode removed as requested
-      // pass.setBarcodes({ ... });
-
-      // Generate the buffer
       const buffer = pass.getAsBuffer();
 
       res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
       res.setHeader('Content-Disposition', `attachment; filename="${safePassFilename(concert.city)}"`);
       res.send(buffer);
-
     } catch (error: any) {
       console.error('Error generating pass:', error);
-      res.status(500).json({ 
-        error: 'Internal Server Error', 
-        message: error.message || 'An unexpected error occurred during pass generation.'
+      res.status(500).json({
+        error: 'Internal Server Error',
+        message: error.message || 'An unexpected error occurred during pass generation.',
       });
     }
   });
@@ -401,7 +429,6 @@ async function startServer() {
     res.json({ ok: true });
   });
 
-  // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
@@ -411,7 +438,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     app.use(express.static(path.join(__dirname, 'dist')));
-    app.get('*', (req, res) => {
+    app.get('*', (_req, res) => {
       res.sendFile(path.join(__dirname, 'dist', 'index.html'));
     });
   }

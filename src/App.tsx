@@ -328,7 +328,7 @@ export default function App() {
                   </a>
                 </p>
                 <p className="mt-1 text-[11px] text-zinc-500">📕 假模特小勺同学</p>
-                <p className="mt-1 text-[11px] text-zinc-500">🧣 误入米缸的芯</p>
+                <p className="mt-1 text-[11px] text-zinc-500">🧣 假模特小勺同学</p>
               </footer>
             </motion.div>
           ) : (

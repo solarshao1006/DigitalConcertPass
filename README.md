@@ -7,6 +7,8 @@
 **Digital Concert Pass** 是一款专为 **张艺兴 (Lay Zhang)** 粉丝设计的电子票根生成工具。它可以将演唱会回忆数字化，生成适配 Apple Wallet（苹果钱包）风格的 `.pkpass` 文件，让你在 iPhone 上永久收藏这份独特的纪念。
 
 ---
+**入口**
+https://digitalconcertpass.onrender.com/
 
 ## ✨ 核心功能
 
